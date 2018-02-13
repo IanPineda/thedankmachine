@@ -1,0 +1,388 @@
+#include <stdio.h>
+#include <conio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <time.h>
+#include <windows.h>
+typedef struct playerStruct{
+    int score;
+    char name[15];
+    int rank;
+}playerStruct;
+typedef struct mapStruct{
+    int mine[80][25];
+    int position[80][25];
+    int mineNextToPosition[80][25];
+    int recurseArray[80][25];
+    int screenCleared[80][25];
+}mapStruct;
+FILE * playerFile;
+mapStruct map;
+void titleScreen(){
+    FILE *arch;
+    char letra;
+    gotoxy (1,1);
+    arch=fopen("C:\\thedankmachine\\titlescreen.txt","r");
+    textcolor (15);
+    while (!feof(arch)){
+        Sleep(1);
+        letra=fgetc(arch);
+        if(letra=='1'){
+            printf ("%c",219);
+        }
+        else{
+            if(letra=='0'){
+                putchar(' ');
+            }
+            else{
+                putchar('\n');
+            }
+        }
+    }
+    Sleep(1000);
+    printf("And Angel");
+    fclose (arch);
+    Sleep(1000);
+}
+void fileOpener(playerStruct *jugador){//ordenar motha cluking rankings
+  playerStruct quanta;
+  fseek(playerFile,-sizeof(quanta),SEEK_END);
+  fread(&quanta,1,sizeof(quanta),playerFile);
+  fwrite(jugador,1,sizeof(quanta),playerFile);
+  //angel
+  return ;
+}
+void menuInterface(int menuMin,int menuMax, int * poinMenuNumber){
+    char userInput;
+    int menuNumber;
+    userInput=0;
+    menuNumber=1;
+    gotoxy(1,menuMin);
+    textcolor(15);
+    printf("*");
+    while(userInput!=13){
+        userInput=getch();
+        textcolor(0);
+        gotoxy(1,menuNumber);
+        printf("*");
+        if(userInput=='w'||userInput=='W')
+            menuNumber--;
+        if(userInput=='s'||userInput=='S')
+            menuNumber++;
+        if(menuNumber<menuMin)
+            menuNumber=menuMax;
+        if(menuNumber>menuMax)
+            menuNumber=menuMin;
+        textcolor(15);
+        gotoxy(1,menuNumber);
+        printf("*");
+    }
+    *poinMenuNumber=menuNumber;
+    return;
+}
+void menu(int * poinMenuNumber){
+    clrscr();
+    textcolor(15);
+    gotoxy(2,1);
+    printf("Buscaminas\n");
+    gotoxy(2,2);
+    printf("Mejores puntuaciones\n");
+    gotoxy(2,3);
+    printf("Salir");
+    menuInterface(1,3,poinMenuNumber);
+    return;
+}
+void mineQuantity(int * mineQuantityVar){//cambiar a pointerz
+    int counter;
+    char userInput,inputString[3];
+    counter=0;
+    clrscr();
+    gotoxy(1,1);
+    printf("Cantidad de minas(20-150 minas):\n");
+    while(userInput!=13&&counter<3){
+        userInput=getch();
+        if(isdigit(userInput)!=0){
+            inputString[counter]=userInput;
+            printf("%c",userInput);
+            counter++;
+        }
+    }
+    *mineQuantityVar=atoi(inputString);
+    if(*mineQuantityVar<20)
+        *mineQuantityVar=20;
+    if(*mineQuantityVar>150)
+        *mineQuantityVar=150;
+    return ;
+}
+void clearAll(){
+    int mineAtX,mineAtY;
+    for(mineAtX=0;mineAtX<79;mineAtX++){
+        for(mineAtY=0;mineAtY<25;mineAtY++){
+            map.mine[mineAtX][mineAtY]=0;
+            map.position[mineAtX][mineAtY]=0;
+            map.recurseArray[mineAtX][mineAtY]=0;
+            map.mineNextToPosition[mineAtX][mineAtY]=0;
+            map.screenCleared[mineAtX][mineAtY]=0;            
+        }
+    }    
+}
+void mineCreator(int * mineAtX,int * mineAtY){
+    *mineAtX=((rand()%78)+2);
+    *mineAtY=((rand()%23)+2);
+    return;
+}
+void tidePodChallenge(int x,int y){
+    int auxX, auxY;
+    if(map.mine[x][y]==1){
+    return;
+    }
+    if(map.recurseArray[x][y]==1){
+        return;
+    }
+    if(map.mineNextToPosition[x][y]>0){
+        map.recurseArray[x][y]=1;
+        return;
+    }
+    if(x>1&&y>1&&x<80&&y<25){
+        for(auxX=x-1;auxX<x+2;auxX++){
+            for(auxY=y-1;auxY<y+2;auxY++){
+                if(auxX==x||auxY==y){
+                    map.recurseArray[x][y]=1;
+                    tidePodChallenge(auxX,auxY);
+                }
+            }
+        }
+    }
+    return;
+}
+void positionClearer(int mineAtX,int mineAtY){
+    gotoxy(mineAtX,mineAtY);
+    if(map.screenCleared[mineAtX][mineAtY]==0){
+             if(map.position[mineAtX][mineAtY]==0)
+            textcolor(15);
+        if(map.position[mineAtX][mineAtY]==1)
+            textcolor(2);
+        printf("%c",219);
+        if(map.recurseArray[mineAtX][mineAtY]==1){
+            gotoxy(mineAtX,mineAtY);
+            textcolor(15);
+            printf("%i",map.mineNextToPosition[mineAtX][mineAtY]);
+        }
+        map.screenCleared[mineAtX][mineAtY]=0;
+    }
+}     
+void pause(int * exitInt){
+    int menuNumber;
+    int * poinMenuNumber;
+    clrscr();
+    textcolor(15);
+    gotoxy(2,1);
+    printf("Regresar al juego");
+    gotoxy(2,2);
+    printf("Guardar y salir");
+    gotoxy(2,3);
+    printf("Salir sin guardar");
+    poinMenuNumber=&menuNumber;
+    menuInterface(1,3,poinMenuNumber);
+    if(menuNumber==1){
+        *exitInt=0;
+    }
+    else{
+        *exitInt=1;
+    }
+    return;
+}
+void loose(){
+    int menuNumber;
+    int * poinMenuNumber;
+    clrscr();
+    textcolor(15);
+    gotoxy(2,1);
+    printf("Jugar de nuevo");
+    gotoxy(2,2);
+    printf("Ir a menu principal");
+    poinMenuNumber=&menuNumber;
+    menuInterface(1,2,poinMenuNumber);
+    return;
+}
+void win(){
+    int menuNumber;
+    int * poinMenuNumber;
+    clrscr();
+    textcolor(15);
+    gotoxy(2,1);
+    printf("Jugar de nuevo");
+    gotoxy(2,2);
+    poinMenuNumber=&menuNumber;
+    menuInterface(1,2,poinMenuNumber);
+    return;
+}
+void minesweeper(){
+    int mineQuantityVar, counter, mineAtX, mineAtY, winOrLoose; 
+    int timeAtBegining, clickiticlackNumber, exitInt, minesCleared;
+    char userInput;
+    int * poinMineAtX;
+    int * poinMineAtY;
+    FILE * playerFile;
+    srand(time(NULL));
+    timeAtBegining=time(NULL);
+    clearAll();
+    mineQuantity(&mineQuantityVar);
+    poinMineAtX=&mineAtX;
+    poinMineAtY=&mineAtY;
+    clrscr();
+    counter=0;
+    while(counter<mineQuantityVar){
+        mineCreator(poinMineAtX,poinMineAtY);
+        if(map.mine[mineAtX][mineAtY]==0)
+            counter++;
+        map.mine[mineAtX][mineAtY]=1;
+    }
+    for(mineAtX=0;mineAtX<80;mineAtX++){
+        for(mineAtY=0;mineAtY<25;mineAtY++){
+            int subcounterX,subcounterY;
+            for(subcounterX=mineAtX-1;subcounterX<mineAtX+2;subcounterX++){
+                for(subcounterY=mineAtY-1;subcounterY<mineAtY+2;subcounterY++){
+                    if(subcounterX!=mineAtX||subcounterY!=mineAtY){
+                        map.mineNextToPosition[mineAtX][mineAtY]+=map.mine[subcounterX][subcounterY];
+                    }
+                }
+            }
+        }
+    }
+    for(mineAtX=2;mineAtX<80;mineAtX++){
+        for(mineAtY=2;mineAtY<25;mineAtY++){
+            gotoxy(mineAtX,mineAtY);
+            printf("%c",219);
+        }
+    }
+    gotoxy(1,1);
+    printf("Tiempo:");
+    gotoxy(21,1);
+    printf("Numero de clicks:");
+    gotoxy(51,1);
+    printf("Minas restantes:");
+    mineAtX=40;
+    mineAtY=12;
+    exitInt=0;
+    minesCleared=0;
+    clickiticlackNumber=0;
+    while(exitInt!=1){
+        while(userInput!='P'&&userInput!='p'){
+            fflush(stdin);
+            userInput=getch();
+            positionClearer(mineAtX,mineAtY);
+            if(userInput=='w'||userInput=='W')
+                mineAtY--;
+            if(userInput=='s'||userInput=='S')
+                mineAtY++;
+            if(userInput=='a'||userInput=='A')
+                mineAtX--;
+            if(userInput=='d'||userInput=='D')
+                mineAtX++;
+            clickiticlackNumber++;
+            if(mineAtX<2)
+                mineAtX=79;
+            if(mineAtY<2)
+                mineAtY=24;
+            if(mineAtX>79)
+                mineAtX=2;
+            if(mineAtY>24)
+                mineAtY=2;
+            if(userInput=='e'||userInput=='E'){
+                map.position[mineAtX][mineAtY]++;
+                minesCleared++;
+            }
+            if(map.position[mineAtX][mineAtY]>1){
+                map.position[mineAtX][mineAtY]=0;
+                minesCleared-=2;
+            }
+            if((userInput=='q'||userInput=='Q')&& map.position[mineAtX][mineAtY]==0){
+                if(map.mine[mineAtX][mineAtY]==1){
+                    userInput='p';
+                    winOrLoose=1;
+                }
+                if(map.mine[mineAtX][mineAtY]==0){
+                    int auxX, auxY;
+                    tidePodChallenge(mineAtX,mineAtY);
+                    for(auxX=0;auxX<81;auxX++){
+                        for(auxY=0;auxY<26;auxY++){
+                            if(map.mine[auxX][auxY]==1){
+                                map.recurseArray[auxX][auxY]=0;
+                            }
+                        }
+                        for(auxX=2;auxX<80;auxX++)
+                            for(auxY=2;auxY<25;auxY++)                           
+                                positionClearer(auxX,auxY);
+                    }
+                }
+            }
+            gotoxy(mineAtX,mineAtY);
+            textcolor(9);
+            printf("%c",219);
+            gotoxy(8,1);
+            textcolor(15);
+            printf("%i",(time(NULL))-timeAtBegining);
+            gotoxy(38,1);
+            printf("%i",clickiticlackNumber);
+            gotoxy(67,1);
+            printf("%i",mineQuantityVar-minesCleared);
+            if(minesCleared==mineQuantityVar+1){
+                counter=0;
+                for(mineAtX=2;mineAtX<80;mineAtX++){
+                    for(mineAtY=2;mineAtY<25;mineAtY++){
+                        if(map.mine[mineAtX][mineAtY]==map.position[mineAtX][mineAtY]){
+                            counter++;
+                        }
+                    }
+                }
+                if(counter==mineQuantityVar){
+                userInput=13;
+                winOrLoose=2;
+                exitInt=1;
+                userInput='p';
+                clrscr();
+                }
+            }
+            
+        }
+        if(winOrLoose==0){
+            pause(&exitInt);
+        }
+        if(winOrLoose==1){
+            loose();
+        }
+        if(winOrLoose==2){
+            titleScreen();
+        }
+    }
+    getch();
+    return;
+}
+void highScores(){
+    clrscr();
+    FILE * playerFile;
+    playerFile=fopen("c:\\buscaminas\\player.dank","rb");
+    if(playerFile==NULL){
+        printf("No has jugado no seas nub");
+    }
+    else{
+    }
+    getch();
+    return;
+}
+int main(){
+    int menuNumber;
+    int * poinMenuNumber;
+    poinMenuNumber=&menuNumber;
+    while(menuNumber!=3){
+        menu(poinMenuNumber);
+        if(menuNumber==1){
+            minesweeper();
+        }
+        if(menuNumber==2){
+            highScores();
+        }
+    }
+    return 0;
+}
