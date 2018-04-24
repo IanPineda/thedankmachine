@@ -43,14 +43,15 @@ void titleScreen(){
     printf("And Angel");
     fclose (arch);
     Sleep(1000);
+    return;
 }
 void fileOpener(playerStruct *jugador){//ordenar motha cluking rankings
-  playerStruct quanta;
-  fseek(playerFile,-sizeof(quanta),SEEK_END);
-  fread(&quanta,1,sizeof(quanta),playerFile);
-  fwrite(jugador,1,sizeof(quanta),playerFile);
-  //angel
-  return ;
+    playerStruct quanta;
+    fseek(playerFile,-sizeof(quanta),SEEK_END);
+    fread(&quanta,1,sizeof(quanta),playerFile);
+    fwrite(jugador,1,sizeof(quanta),playerFile);
+    //angel
+    return ;
 }
 void menuInterface(int menuMin,int menuMax, int * poinMenuNumber){
     char userInput;
@@ -112,7 +113,7 @@ void mineQuantity(int * mineQuantityVar){//cambiar a pointerz
         *mineQuantityVar=20;
     if(*mineQuantityVar>150)
         *mineQuantityVar=150;
-    return ;
+    return;
 }
 void clearAll(){
     int mineAtX,mineAtY;
@@ -124,7 +125,8 @@ void clearAll(){
             map.mineNextToPosition[mineAtX][mineAtY]=0;
             map.screenCleared[mineAtX][mineAtY]=0;            
         }
-    }    
+    }
+    return;
 }
 void mineCreator(int * mineAtX,int * mineAtY){
     *mineAtX=((rand()%78)+2);
@@ -134,7 +136,7 @@ void mineCreator(int * mineAtX,int * mineAtY){
 void tidePodChallenge(int x,int y){
     int auxX, auxY;
     if(map.mine[x][y]==1){
-    return;
+        return;
     }
     if(map.recurseArray[x][y]==1){
         return;
@@ -158,7 +160,7 @@ void tidePodChallenge(int x,int y){
 void positionClearer(int mineAtX,int mineAtY){
     gotoxy(mineAtX,mineAtY);
     if(map.screenCleared[mineAtX][mineAtY]==0){
-             if(map.position[mineAtX][mineAtY]==0)
+            if(map.position[mineAtX][mineAtY]==0)
             textcolor(15);
         if(map.position[mineAtX][mineAtY]==1)
             textcolor(2);
@@ -170,6 +172,7 @@ void positionClearer(int mineAtX,int mineAtY){
         }
         map.screenCleared[mineAtX][mineAtY]=0;
     }
+    return;
 }     
 void pause(int * exitInt){
     int menuNumber;
@@ -337,11 +340,11 @@ void minesweeper(){
                     }
                 }
                 if(counter==mineQuantityVar){
-                userInput=13;
-                winOrLoose=2;
-                exitInt=1;
-                userInput='p';
-                clrscr();
+                    userInput=13;
+                    winOrLoose=2;
+                    exitInt=1;
+                    userInput='p';
+                    clrscr();
                 }
             }
             
@@ -367,6 +370,7 @@ void highScores(){
         printf("No has jugado no seas nub");
     }
     else{
+        //:')
     }
     getch();
     return;
